@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>岳明辉生日应援 - PINKRAY 7.11</title>
+<meta property="og:title" content="🌙 岳明辉7.11生日应援地图">
+<meta property="og:description" content="专属花房 · 应援大屏 · 20+城市覆盖全国">
+<meta name="description" content="岳明辉PINKRAY 7月11日生日应援活动全收录 — 专属花房特别企划 + 全国大屏点亮计划 + 海外应援">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #050010;
+  --card: rgba(255,255,255,0.04);
+  --card-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.08);
+  --purple: #9333EA;
+  --purple-light: #A277FF;
+  --gold: #E53E3E;
+  --gold-bg: rgba(229,62,62,0.12);
+  --text: #FFFFFF;
+  --text-secondary: #A8A8C2;
+  --text-weak: #6B6B7B;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Sarasa Gothic SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.app { max-width: 420px; margin: 0 auto; }
+
+/* Hero */
+.hero {
+  padding: 40px 16px 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: 50%; transform: translateX(-50%);
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(147,51,234,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero h1 { font-size: 22px; font-weight: 700; position: relative; }
+.hero h2 { font-size: 13px; color: var(--text-secondary); font-weight: 400; margin-top: 4px; position: relative; }
+
+/* Countdown */
+.countdown {
+  display: flex; gap: 8px; justify-content: center;
+  margin-top: 14px; position: relative;
+}
+.cd-item {
+  width: 54px; height: 56px; border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.cd-num { font-size: 22px; font-weight: 800; font-family: 'SF Mono', 'Inter', monospace; color: var(--purple); }
+.cd-label { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+
+/* Stats Bar */
+.stats-bar {
+  display: flex; gap: 6px; justify-content: center; padding: 0 16px 12px;
+}
+.stat-pill {
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 14px;
+  font-size: 11px; font-weight: 600;
+}
+.stat-pill.purple { background: rgba(147,51,234,0.12); color: var(--purple); }
+.stat-pill.gold { background: rgba(147,51,234,0.12); color: var(--purple); }
+
+/* Map */
+.map-section { margin: 0 12px 10px; }
+.map-container {
+  width: 100%; height: 200px; border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.map-container .leaflet-container { background: #0a0a1a; }
+.map-container .leaflet-control-zoom a {
+  background: rgba(15,5,30,0.9) !important; color: #ccc !important; border-color: rgba(147,51,234,0.2) !important;
+}
+.map-container .leaflet-control-zoom a:hover { background: rgba(147,51,234,0.2) !important; color: #fff !important; }
+
+/* Section */
+.section { padding: 0 12px; }
+.section-title {
+  font-size: 13px; font-weight: 600; padding: 10px 2px 6px;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; user-select: none;
+}
+.section-title .s-arrow { font-size: 10px; transition: transform .2s; color: var(--text-weak); }
+.section-title.collapsed .s-arrow { transform: rotate(-90deg); }
+.section-title.purple { color: var(--purple); }
+.section-title.gold { color: var(--purple); }
+.section-body.collapsed { display: none; }
+
+/* Special Cards */
+.special-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; border-radius: 12px; margin-bottom: 6px;
+  background: rgba(147,51,234,0.06);
+  border: 1px solid rgba(147,51,234,0.12);
+  cursor: pointer; transition: background .2s;
+}
+.special-card:active { background: rgba(147,51,234,0.12); }
+.special-card .icon { font-size: 24px; }
+.special-card .info { flex: 1; min-width: 0; }
+.special-card .info .name { font-size: 14px; font-weight: 600; }
+.special-card .info .sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.special-card .tag {
+  font-size: 10px; font-weight: 600; color: var(--purple);
+  white-space: nowrap;
+}
+
+/* City Cards */
+.city-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 12px; margin-bottom: 5px;
+  background: var(--card); border: 1px solid var(--border);
+  cursor: pointer; transition: background .2s;
+}
+.city-card:active { background: var(--card-hover); }
+.city-card .gradient-block {
+  width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
+  object-fit: cover; background: rgba(147,51,234,0.1);
+}
+/* Special card poster */
+.special-poster {
+  width: 40px; height: 40px; border-radius: 6px; flex-shrink: 0;
+  object-fit: contain;
+}
+.city-card .city-info { flex: 1; min-width: 0; }
+.city-card .city-name { font-size: 14px; font-weight: 600; }
+.city-card .city-venues { font-size: 10px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.city-card .screen-count {
+  font-size: 10px; font-weight: 600; color: var(--purple);
+  background: rgba(147,51,234,0.12); padding: 4px 8px; border-radius: 12px;
+  white-space: nowrap;
+}
+/* Distance badge */
+.distance-badge {
+  font-size: 10px; font-weight: 600; color: #22c55e;
+  background: rgba(34,197,94,0.1); padding: 4px 8px; border-radius: 12px;
+  white-space: nowrap; flex-shrink: 0;
+}
+/* Nearby status bar */
+.nearby-status {
+  margin: 0 12px 8px; padding: 8px 12px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+}
+.nearby-status.locating { color: var(--text-secondary); }
+.nearby-status.located { color: #22c55e; }
+.nearby-status.denied { color: var(--text-weak); }
+.nearby-status .ns-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.nearby-status .ns-dot.pulse { width: 8px; height: 8px; background: #22c55e; animation: dotPulse 1.5s infinite; }
+.nearby-status .ns-dot.err { background: var(--text-weak); }
+@keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.nearby-status .ns-retry {
+  margin-left: auto; font-size: 11px; color: var(--purple); cursor: pointer; font-weight: 500;
+}
+
+/* Province Header */
+.province-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 2px 4px; margin-top: 4px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; user-select: none;
+}
+.province-header .arrow { font-size: 10px; transition: transform .2s; color: var(--text-weak); }
+.province-header.collapsed .arrow { transform: rotate(-90deg); }
+.province-cities { padding-left: 4px; }
+.province-cities.collapsed { display: none; }
+
+/* Detail Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 1000; display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  background: #120724; border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 420px; max-height: 80vh;
+  overflow-y: auto; padding: 20px 16px 32px;
+}
+.modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.modal-detail { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.modal-detail .row { display: flex; gap: 8px; margin-top: 10px; }
+.modal-detail .row .label { color: var(--text-weak); width: 48px; flex-shrink: 0; }
+.modal-detail .row .val { color: var(--text-secondary); }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+.modal-btn {
+  flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  text-align: center; cursor: pointer; border: none;
+}
+.modal-btn.primary { background: var(--purple); color: #fff; }
+.modal-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+/* Tab Bar */
+.tab-bar {
+  position: sticky; bottom: 0; padding: 8px 12px 20px;
+  background: linear-gradient(transparent, var(--bg) 30%);
+}
+.tab-pill {
+  display: flex; border-radius: 24px; padding: 3px;
+  background: var(--card); border: 1px solid var(--border);
+}
+.tab-item {
+  flex: 1; padding: 10px; text-align: center; border-radius: 21px;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; transition: all .2s;
+}
+.tab-item.active { background: var(--purple); color: #fff; font-weight: 600; }
+
+/* Disclaimer */
+.disclaimer {
+  text-align: center; padding: 12px 24px 8px;
+  font-size: 11px; color: var(--text-weak); line-height: 1.7;
+}
+.disclaimer a { color: var(--purple-light); text-decoration: none; }
+
+/* Search */
+.search-bar {
+  margin: 0 12px 10px; position: relative;
+}
+.search-bar input {
+  width: 100%; padding: 10px 14px 10px 36px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text); font-size: 13px;
+  outline: none; transition: border .2s;
+}
+.search-bar input:focus { border-color: var(--purple); }
+.search-bar::before {
+  content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; opacity: 0.5;
+}
+
+/* Leaflet dark tiles */
+.dark-tiles { filter: grayscale(0.3) brightness(0.6) hue-rotate(180deg) invert(1); }
+
+/* Map city labels */
+.map-city-label {
+  background: rgba(5,0,16,0.85) !important;
+  border: 1px solid rgba(147,51,234,0.3) !important;
+  color: #c7bff0 !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-weight: 500;
+  box-shadow: 0 0 8px rgba(147,51,234,0.2) !important;
+}
+.map-city-label::before { border-top-color: rgba(5,0,16,0.85) !important; }
+
+/* Empty */
+.empty { text-align: center; padding: 40px; color: var(--text-weak); font-size: 13px; }
+
+/* FAB */
+.fab {
+  position: fixed; bottom: 100px; right: 20px; z-index: 900;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--purple); color: #fff; border: none;
+  font-size: 24px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(147,51,234,0.5);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+}
+.fab:active { transform: scale(0.92); }
+.fab .badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--gold); color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  display: none;
+}
+.fab .badge.show { display: flex; }
+
+/* Submit Form Modal */
+.submit-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 1100; display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.submit-overlay.show { display: flex; }
+.submit-panel {
+  background: #120724; border-radius: 16px;
+  width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+.submit-panel h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.submit-panel .field { margin-bottom: 12px; }
+.submit-panel .field label {
+  display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500;
+}
+.submit-panel .field label .req { color: var(--gold); }
+.submit-panel .field input, .submit-panel .field select, .submit-panel .field textarea {
+  width: 100%; padding: 10px 12px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 13px; outline: none;
+  font-family: inherit;
+}
+.submit-panel .field input:focus, .submit-panel .field select:focus, .submit-panel .field textarea:focus { border-color: var(--purple); }
+.submit-panel .field textarea { resize: vertical; min-height: 60px; }
+.submit-panel .field select option { background: #1a0a2e; color: var(--text); }
+.submit-row { display: flex; gap: 8px; }
+.submit-row .field { flex: 1; }
+.submit-panel .hint { font-size: 10px; color: var(--text-weak); margin-top: -8px; margin-bottom: 8px; }
+.submit-done {
+  text-align: center; padding: 20px 0;
+}
+.submit-done .done-icon { font-size: 48px; margin-bottom: 12px; }
+.submit-done p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.submit-done .copied-text {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px; font-size: 11px; color: var(--text-secondary); text-align: left;
+  margin-bottom: 10px; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;
+}
+
+/* Admin panel */
+.admin-badge {
+  position: fixed; top: 10px; right: 14px; z-index: 950;
+  font-size: 10px; color: var(--text-weak); opacity: 0.4;
+  cursor: pointer; padding: 4px 8px; border-radius: 8px;
+}
+.admin-panel {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1150;
+  display: none; flex-direction: column; padding: 20px;
+}
+.admin-panel.show { display: flex; }
+.admin-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.admin-header h3 { font-size: 16px; font-weight: 700; }
+.admin-list { flex: 1; overflow-y: auto; }
+.admin-item {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; margin-bottom: 8px; font-size: 12px;
+}
+.admin-item .ai-row { display: flex; gap: 8px; margin-bottom: 3px; }
+.admin-item .ai-row .ai-l { color: var(--text-weak); width: 36px; flex-shrink: 0; }
+.admin-item .ai-row .ai-v { color: var(--text-secondary); }
+.admin-actions { display: flex; gap: 8px; margin-top: 8px; }
+.admin-btn {
+  padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+  border: none; cursor: pointer;
+}
+.admin-btn.done { background: rgba(34,197,94,0.15); color: #22c55e; }
+.admin-btn.del { background: rgba(239,68,68,0.12); color: #ef4444; }
+.admin-btn.export { background: var(--purple); color: #fff; }
+.admin-empty { text-align: center; padding: 40px; color: var(--text-weak); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Hero -->
+  <div class="hero">
+    <h1>🌙 岳明辉生日应援</h1>
+    <h2>PINKRAY · 7.11 全国应援地图</h2>
+    <div class="countdown" id="countdown">
+      <div class="cd-item"><span class="cd-num" id="cd-d">--</span><span class="cd-label">天</span></div>
+      <div class="cd-item"><span class="cd-num" id="cd-h">--</span><span class="cd-label">时</span></div>
+      <div class="cd-item"><span class="cd-num" id="cd-m">--</span><span class="cd-label">分</span></div>
+      <div class="cd-item"><span class="cd-num" id="cd-s">--</span><span class="cd-label">秒</span></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <span class="stat-pill gold" id="stat-special">-- 特别企划</span>
+    <span class="stat-pill purple" id="stat-screens">-- 应援大屏</span>
+    <span class="stat-pill purple" id="stat-cities">-- 城市</span>
+    <span class="stat-pill purple" id="stat-overseas">-- 海外</span>
+  </div>
+
+  <!-- Map -->
+  <div class="map-section"><div class="map-container" id="map"></div></div>
+
+  <!-- Search -->
+  <div class="search-bar"><input type="text" id="searchInput" placeholder="搜索城市、地点、应援站…" oninput="renderCityList()"></div>
+
+  <!-- List -->
+  <div id="listContainer">
+    <!-- 特别企划 -->
+    <div class="section" id="specialSection"></div>
+    <!-- 全国大屏 -->
+    <div class="section" id="screenSection">
+      <div class="section-title purple" onclick="toggleSection('screenBody', this)">
+        <span>📺 全国大屏点亮计划</span><span class="s-arrow">▼</span>
+      </div>
+      <div class="section-body" id="screenBody"><div id="cityList"></div></div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    信息来源于网络公开渠道收集，本页面为个人整理，仅供粉丝参考。<br>如有错漏欢迎补充修正 💜
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab-pill">
+      <div class="tab-item active" onclick="switchTab('all',this)">📋 国内应援</div>
+      <div class="tab-item" onclick="switchTab('nearby',this)">📍 附近</div>
+      <div class="tab-item" onclick="switchTab('abroad',this)">🌏 海外</div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="openSubmitForm()" title="补充应援">➕<span class="badge" id="fabBadge"></span></button>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet" id="modalSheet"></div>
+</div>
+
+<!-- Submit Form Modal -->
+<div class="submit-overlay" id="submitOverlay" onclick="if(event.target===this)closeSubmitForm()">
+  <div class="submit-panel" id="submitPanel"></div>
+</div>
+
+<!-- Admin Panel (tap hero 5x) -->
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-header">
+    <h3>📋 待审核应援 (共 <span id="adminCount">0</span> 条)</h3>
+    <button class="admin-btn export" onclick="exportPending()">📤 导出全部</button>
+  </div>
+  <div class="admin-list" id="adminList"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="modal-btn secondary" onclick="closeAdmin()" style="flex:1">关闭</button>
+    <button class="modal-btn primary" onclick="exportPending()" style="flex:1">📤 导出为文本</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ========== DATA ==========
+const specialProjects = [
+  { id: 's1', name: '巨幅海报墙', city: '北京', venue: '西店记忆二期F2（黑糖广场旁）', lat: 39.9042, lng: 116.5074, date: '6.30–7.15 / 7.21–7.31', station: '专属花房ForPINKRAY', tag: '花房❶', icon: '', benefit: '近200m²围墙广告，首次接受粉丝应援投放' },
+  { id: 's2', name: '711路主题公交', city: '南京', venue: '711路公交（综保区场站↔安德门）苏A07680F', lat: 32.0603, lng: 118.7969, date: '7.1–7.30 · 6:00-22:00', station: '专属花房ForPINKRAY', tag: '花房❷', icon: '🚌', benefit: '途经南航翠屏山校区，711呼应生日7/11' },
+  { id: 's3', name: '华夏航空包机', city: '全国', venue: '华夏航空CRJ900 · 编号B3227', lat: 34.3416, lng: 108.9398, date: '7.1–8.5', station: '专属花房ForPINKRAY', tag: '花房❸', icon: '✈️', benefit: '全定制机舱！航旅纵横搜「B3227」查实时航班' }
+];
+
+const screenData = [
+  // 花房ForPINKRAY 大屏 (20)
+  { city: '北京', province: '北京市', venue: '京西大悦城', lat: 39.9240, lng: 116.1550, station: '专属花房ForPINKRAY' },
+  { city: '兰州', province: '甘肃省', venue: '城关万达', lat: 36.0611, lng: 103.8343, station: '专属花房ForPINKRAY' },
+  { city: '广州', province: '广东省', venue: '1906科技园回环广场', lat: 23.1291, lng: 113.2644, station: '专属花房ForPINKRAY' },
+  { city: '佛山', province: '广东省', venue: '东基禅西环宇城', lat: 23.0218, lng: 113.1216, station: '专属花房ForPINKRAY' },
+  { city: '石家庄', province: '河北省', venue: '龙湖时间轴拾悦荟', lat: 38.0428, lng: 114.5149, station: '专属花房ForPINKRAY' },
+  { city: '郑州', province: '河南省', venue: '丹尼斯百货航海路店', lat: 34.7466, lng: 113.6253, station: '专属花房ForPINKRAY' },
+  { city: '周口', province: '河南省', venue: '项城万达广场', lat: 33.6177, lng: 114.6599, station: '专属花房ForPINKRAY' },
+  { city: '南阳', province: '河南省', venue: '新华城市广场', lat: 32.9908, lng: 112.5284, station: '专属花房ForPINKRAY' },
+  { city: '哈尔滨', province: '黑龙江省', venue: '西城红场', lat: 45.7580, lng: 126.6325, station: '专属花房ForPINKRAY' },
+  { city: '哈尔滨', province: '黑龙江省', venue: '凯德广场(学府路店)', lat: 45.7230, lng: 126.6150, station: '专属花房ForPINKRAY' },
+  { city: '长沙', province: '湖南省', venue: '沙湾天虹', lat: 28.2282, lng: 112.9388, station: '专属花房ForPINKRAY' },
+  { city: '衡阳', province: '湖南省', venue: '蒸湘万达广场', lat: 26.8934, lng: 112.5719, station: '专属花房ForPINKRAY' },
+  { city: '株洲', province: '湖南省', venue: '王府星Mall', lat: 27.8274, lng: 113.1340, station: '专属花房ForPINKRAY' },
+  { city: '南京', province: '江苏省', venue: '华采天地', lat: 32.0200, lng: 118.7380, station: '专属花房ForPINKRAY' },
+  { city: '南京', province: '江苏省', venue: '石路天虹', lat: 32.0500, lng: 118.7700, station: '专属花房ForPINKRAY' },
+  { city: '大连', province: '辽宁省', venue: '安盛购物广场金州店', lat: 39.0500, lng: 121.7170, station: '专属花房ForPINKRAY' },
+  { city: '大连', province: '辽宁省', venue: '中山区友好广场(中山路9号)', lat: 38.9214, lng: 121.6452, station: '其他应援站', date: '7.11 7:00-22:00' },
+  { city: '青岛', province: '山东省', venue: '即墨吾悦广场', lat: 36.3900, lng: 120.4550, station: '专属花房ForPINKRAY' },
+  { city: '天津', province: '天津市', venue: '和平印象城', lat: 39.1172, lng: 117.1985, station: '专属花房ForPINKRAY' },
+  { city: '喀什', province: '新疆', venue: '古城万达广场', lat: 39.4677, lng: 75.9897, station: '专属花房ForPINKRAY' },
+  { city: '乌鲁木齐', province: '新疆', venue: '德汇万达广场', lat: 43.8256, lng: 87.6168, station: '专属花房ForPINKRAY', date: '7.9–7.1x' },
+  // 其他大屏 (7)
+  { city: '北京', province: '北京市', venue: '十里汇', lat: 39.9360, lng: 116.4600, station: '其他应援站' },
+  { city: '哈尔滨', province: '黑龙江省', venue: '红博会展购物广场', lat: 45.7530, lng: 126.6980, station: '其他应援站' },
+  { city: '苏州', province: '江苏省', venue: '桑迪购物', lat: 31.2990, lng: 120.5853, station: '其他应援站' },
+  { city: '徐州', province: '江苏省', venue: '爱琴海购物中心', lat: 34.2058, lng: 117.2841, station: '其他应援站' },
+  { city: '沈阳', province: '辽宁省', venue: '三台子万象汇', lat: 41.8057, lng: 123.4315, station: '其他应援站' },
+  { city: '西安', province: '陕西省', venue: '大唐西市城购物中心', lat: 34.2594, lng: 108.8822, station: '其他应援站' },
+  { city: '嘉兴', province: '浙江省', venue: '喜善银泰百货', lat: 30.7693, lng: 120.7484, station: '其他应援站', date: '7.1x' },
+  // 合集页中的大屏
+  { city: '上海', province: '上海市', venue: '龙湖云廊天街', lat: 31.1730, lng: 121.2870, station: '其他应援站' },
+  { city: '台州', province: '浙江省', venue: '椒江宝龙城', lat: 28.6557, lng: 121.4195, station: '其他应援站' },
+  { city: '广州', province: '广东省', venue: '友谊商店国金店', lat: 23.1210, lng: 113.3250, station: '其他应援站' },
+  { city: '福州', province: '福建省', venue: '万象城', lat: 26.0745, lng: 119.2965, station: '其他应援站' },
+  { city: '海口', province: '海南省', venue: '海控全球精品免税城', lat: 20.0174, lng: 110.3492, station: '其他应援站' },
+  { city: '海口', province: '海南省', venue: '高兴里', lat: 20.0300, lng: 110.3200, station: '其他应援站' },
+  { city: '银川', province: '宁夏', venue: '兴庆万达广场', lat: 38.4872, lng: 106.2309, station: '其他应援站' },
+  { city: '无锡', province: '江苏省', venue: '万象城', lat: 31.5460, lng: 120.2920, station: '其他应援站' },
+{ city: '赣州', province: '江西省', venue: '赣州万象城', lat: 25.8318, lng: 114.935, station: '其他应援站' },
+  { city: '遵义', province: '贵州省', venue: '洒都方圆荟广场', lat: 27.725, lng: 106.9274, station: '其他应援站' },
+  { city: '西安', province: '陕西省', venue: '京东MALL(西安未央店）', lat: 34.3416, lng: 108.9398, station: '其他应援站' },
+  { city: '厦门', province: '福建省', venue: '海上世界购物中心', lat: 24.4798, lng: 118.0894, station: '其他应援站' },
+  { city: '吉首', province: '湖南省', venue: '湘西州吉首A天虹购物中心', lat: 28.2624, lng: 109.6981, station: '其他应援站' },
+  { city: '金华', province: '浙江省', venue: '永盛购物中心', lat: 29.0781, lng: 119.6472, station: '其他应援站' },
+  { city: '北京', province: '北京市', venue: '微博IN跨次元引力场', lat: 39.9042, lng: 116.4074, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '武林银泰百货', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '银川', province: '宁夏', venue: '西夏万达广场', lat: 38.4872, lng: 106.2309, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '芙蓉天虹', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '太原', province: '山西省', venue: '中正天街', lat: 37.8706, lng: 112.5489, station: '其他应援站' },
+  { city: '宜昌', province: '湖北省', venue: '宜昌伍家岗万达广场', lat: 30.6907, lng: 111.2908, station: '其他应援站' },
+  { city: '银川', province: '宁夏', venue: '新百中心', lat: 38.4872, lng: 106.2309, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '清发三林印象汇', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '兰溪', province: '浙江省', venue: '兰溪宝龙广场', lat: 29.2081, lng: 119.4605, station: '其他应援站' },
+  { city: '深圳', province: '广东省', venue: 'K11 ECOAST', lat: 22.5431, lng: 114.0579, station: '其他应援站' },
+  { city: '南通', province: '江苏省', venue: '印象城', lat: 31.9802, lng: 120.8943, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '奥体天虹', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '五角场万达广场', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '地铁大厦天虹', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '南昌红谷滩万象天地', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '乌鲁木齐', province: '新疆', venue: '杉杉奥特莱斯', lat: 43.8256, lng: 87.6168, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '中大银泰百货', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '浦江欢乐颂', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '长宁大融城', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '北京', province: '北京市', venue: '合景·摩方（北京）购物中心', lat: 39.9042, lng: 116.4074, station: '其他应援站' },
+  { city: '淮安', province: '江苏省', venue: '淮安国联·融创inspark', lat: 33.551, lng: 119.1132, station: '其他应援站' },
+  { city: '兰州', province: '甘肃省', venue: '亚欧商厦', lat: 36.0611, lng: 103.8343, station: '其他应援站' },
+  { city: '青岛', province: '山东省', venue: '未来城万科广场', lat: 36.0671, lng: 120.3826, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '悦方IDMALL', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '金昌', province: '甘肃省', venue: '国芳广场', lat: 38.5213, lng: 102.1879, station: '其他应援站' },
+  { city: '济南', province: '山东省', venue: '银座新辰天地', lat: 36.6512, lng: 116.9972, station: '其他应援站' },
+  { city: '合肥', province: '安徽省', venue: '包河万象汇', lat: 31.8206, lng: 117.2272, station: '其他应援站' },
+  { city: '莆田', province: '福建省', venue: '正荣财富中心', lat: 25.454, lng: 119.0077, station: '其他应援站' },
+  { city: '呼和浩特', province: '内蒙古', venue: '维多利喜悦汇', lat: 40.8424, lng: 111.749, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '浦江万达广场', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '南京', province: '江苏省', venue: '金陵天地', lat: 32.0603, lng: 118.7969, station: '其他应援站' },
+  { city: '北京', province: '北京市', venue: '新奥天虹', lat: 39.9042, lng: 116.4074, station: '其他应援站' },
+  { city: '渭南', province: '陕西省', venue: '临渭万达广场', lat: 34.4997, lng: 109.5022, station: '其他应援站' },
+  { city: '保定', province: '河北省', venue: '未来石万达广场', lat: 38.8739, lng: 115.4646, station: '其他应援站' },
+  { city: '银川', province: '宁夏', venue: '金凤万达广场', lat: 38.4872, lng: 106.2309, station: '其他应援站' },
+  { city: '天水', province: '甘肃省', venue: '秦州万达广场', lat: 34.5809, lng: 105.7249, station: '其他应援站' },
+  { city: '北京', province: '北京市', venue: '大红门银泰百货', lat: 39.9042, lng: 116.4074, station: '其他应援站' },
+  { city: '芜湖', province: '安徽省', venue: '银泰百货芜湖店', lat: 31.352, lng: 118.4331, station: '其他应援站' },
+  { city: '漳州', province: '福建省', venue: '龙海万科广场', lat: 24.513, lng: 117.6471, station: '其他应援站' },
+  { city: '哈尔滨', province: '黑龙江省', venue: '松北万象汇', lat: 45.8038, lng: 126.535, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '龙湖上海云廊天街', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '广州', province: '广东省', venue: '广州友谊商店（国金店）', lat: 23.1291, lng: 113.2644, station: '其他应援站' },
+  { city: '海口', province: '海南省', venue: '海控GDF免税城', lat: 20.0174, lng: 110.3492, station: '其他应援站' },
+  { city: '银川', province: '宁夏', venue: '华联BHG MALL', lat: 38.4872, lng: 106.2309, station: '其他应援站' },
+  { city: '呼和浩特', province: '内蒙古', venue: '茂业摩尔城', lat: 40.8424, lng: 111.749, station: '其他应援站' },
+  { city: '重庆', province: '重庆市', venue: '歌磁巷', lat: 29.4316, lng: 106.9123, station: '其他应援站' },
+  { city: '厦门', province: '福建省', venue: '海沧招商花园城', lat: 24.4798, lng: 118.0894, station: '其他应援站' },
+  { city: '沈阳', province: '辽宁省', venue: '沈北万达广场', lat: 41.8057, lng: 123.4315, station: '其他应援站' },
+  { city: '大连', province: '辽宁省', venue: '亿合城开发区店', lat: 38.9137, lng: 121.6148, station: '其他应援站' },
+  { city: '沈阳', province: '辽宁省', venue: '沈阳北一路万达广场', lat: 41.8057, lng: 123.4315, station: '其他应援站' },
+  { city: '辽阳', province: '辽宁省', venue: '文圣万达广场', lat: 41.2681, lng: 123.237, station: '其他应援站' },
+  { city: '嘉兴', province: '浙江省', venue: '双溪湖嘉邻中心', lat: 30.7693, lng: 120.7484, station: '其他应援站' },
+  { city: '湖州', province: '浙江省', venue: '吴兴万达广场', lat: 30.893, lng: 120.0868, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: 'CP静安', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '苏州', province: '江苏省', venue: '星悦汇', lat: 31.299, lng: 120.5853, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '沙湾公园天虹 CC.Mal', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '汇金天虹购物中心（鄱阳店）', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '星沙天虹购物中心', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '宁乡天虹购物中心', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '长沙', province: '湖南省', venue: '浏阳天虹购物中心', lat: 28.2282, lng: 112.9388, station: '其他应援站' },
+  { city: '湘潭', province: '湖南省', venue: '湘潭天虹购物中心', lat: 27.8297, lng: 112.9441, station: '其他应援站' },
+  { city: '株洲', province: '湖南省', venue: '株洲天虹商场', lat: 27.8274, lng: 113.134, station: '其他应援站' },
+  { city: '岳阳', province: '湖南省', venue: '岳阳天虹商场', lat: 29.3581, lng: 113.129, station: '其他应援站' },
+  { city: '娄底', province: '湖南省', venue: '娄底天虹商场', lat: 27.7017, lng: 111.9968, station: '其他应援站' },
+  { city: '吉首', province: '湖南省', venue: '吉首天虹购物中心（湘西）', lat: 28.2624, lng: 109.6981, station: '其他应援站' },
+  { city: '衡阳', province: '湖南省', venue: '衡阳天虹（衡成广场店）', lat: 26.8934, lng: 112.5719, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '中山路天虹商场', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '朝阳洲天虹购物中心（九洲天虹）', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '象湖天虹（演武广场店）', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '江大天虹商场', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '京东天虹商场', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '经开天虹购物中心', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '南昌 CC.Mall 天虹', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '吉安', province: '江西省', venue: '吉安天虹购物中心', lat: 27.0875, lng: 114.9929, station: '其他应援站' },
+  { city: '吉安', province: '江西省', venue: '安福天虹购物中心', lat: 27.0875, lng: 114.9929, station: '其他应援站' },
+  { city: '吉安', province: '江西省', venue: '吉安城南天虹购物中心', lat: 27.0875, lng: 114.9929, station: '其他应援站' },
+  { city: '上饶', province: '江西省', venue: '上饶天虹购物中心', lat: 28.4549, lng: 117.9433, station: '其他应援站' },
+  { city: '上饶', province: '江西省', venue: '广丰天虹购物中心', lat: 28.4549, lng: 117.9433, station: '其他应援站' },
+  { city: '上饶', province: '江西省', venue: '余干天虹购物中心', lat: 28.4549, lng: 117.9433, station: '其他应援站' },
+  { city: '萍乡', province: '江西省', venue: '萍乡天虹购物中心', lat: 27.6229, lng: 113.8547, station: '其他应援站' },
+  { city: '萍乡', province: '江西省', venue: '莲花天虹商场', lat: 27.6229, lng: 113.8547, station: '其他应援站' },
+  { city: '鹰潭', province: '江西省', venue: '鹰潭天虹购物中心', lat: 28.2602, lng: 117.0692, station: '其他应援站' },
+  { city: '九江', province: '江西省', venue: '共青城天虹商场', lat: 29.7051, lng: 116.0019, station: '其他应援站' },
+  { city: '宜春', province: '江西省', venue: '宜春天虹购物中心', lat: 27.8167, lng: 114.4168, station: '其他应援站' },
+  { city: '赣州', province: '江西省', venue: '赣州君尚购物中心（天虹高端线）', lat: 25.8318, lng: 114.935, station: '其他应援站' },
+  { city: '抚州', province: '江西省', venue: '抚州天虹商场', lat: 27.949, lng: 116.3581, station: '其他应援站' },
+  { city: '新余', province: '江西省', venue: '新余天虹购物中心', lat: 27.8178, lng: 114.9174, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '城北万象城', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '石家庄', province: '河北省', venue: '欢乐汇100FUNCITY', lat: 38.0428, lng: 114.5149, station: '其他应援站' },
+  { city: '深圳', province: '广东省', venue: '宝安天虹购物中心', lat: 22.5431, lng: 114.0579, station: '其他应援站' },
+  { city: '厦门', province: '福建省', venue: '星河COCO Park', lat: 24.4798, lng: 118.0894, station: '其他应援站' },
+  { city: '襄阳', province: '湖北省', venue: '美联m·park购物中心', lat: 32.009, lng: 112.1225, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '又又中心', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '广州', province: '广东省', venue: '美林M·LIVE天地', lat: 23.1291, lng: 113.2644, station: '其他应援站' },
+  { city: '兰州', province: '甘肃省', venue: '南滨河万达', lat: 36.0611, lng: 103.8343, station: '其他应援站' },
+  { city: '武汉', province: '湖北省', venue: '武汉万象城', lat: 30.5928, lng: 114.3055, station: '其他应援站' },
+  { city: '郑州', province: '河南省', venue: '郑州二七万象城', lat: 34.7466, lng: 113.6253, station: '其他应援站' },
+  { city: '西宁', province: '青海省', venue: '北川万达广场', lat: 36.6171, lng: 101.7785, station: '其他应援站' },
+  { city: '遂宁', province: '四川省', venue: '射洪万达广场', lat: 30.533, lng: 105.5923, station: '其他应援站' },
+  { city: '哈尔滨', province: '黑龙江省', venue: '哈尔滨融创茂', lat: 45.8038, lng: 126.535, station: '其他应援站' },
+  { city: '大连', province: '辽宁省', venue: '大连甘井子万达广场', lat: 38.9137, lng: 121.6148, station: '其他应援站' },
+  { city: '成都', province: '四川省', venue: '双流万达广场', lat: 30.5728, lng: 104.0668, station: '其他应援站' },
+  { city: '北京', province: '北京市', venue: '凯德MALL·太阳宫', lat: 39.9042, lng: 116.4074, station: '其他应援站' },
+  { city: '贵阳', province: '贵州省', venue: '花果园购物中心', lat: 26.647, lng: 106.6302, station: '其他应援站' },
+  { city: '武汉', province: '湖北省', venue: '武汉K11', lat: 30.5928, lng: 114.3055, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '南昌万象城', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '上海', province: '上海市', venue: '上苏河湾万象天地', lat: 31.2304, lng: 121.4737, station: '其他应援站' },
+  { city: '西安', province: '陕西省', venue: '民乐园万达广场', lat: 34.3416, lng: 108.9398, station: '其他应援站' },
+  { city: '昆明', province: '云南省', venue: '好悦天地', lat: 25.0389, lng: 102.7183, station: '其他应援站' },
+  { city: '长春', province: '吉林省', venue: '宽城万达广场', lat: 43.8178, lng: 125.3235, station: '其他应援站' },
+  { city: '台州', province: '浙江省', venue: '经开万达广场', lat: 28.6557, lng: 121.4195, station: '其他应援站' },
+  { city: '绍兴', province: '浙江省', venue: '诸暨万达广场', lat: 30.0303, lng: 120.5802, station: '其他应援站' },
+  { city: '海口', province: '海南省', venue: '远大购物中心', lat: 20.0174, lng: 110.3492, station: '其他应援站' },
+  { city: '重庆', province: '重庆市', venue: '重庆2077赛博城市', lat: 29.4316, lng: 106.9123, station: '其他应援站' },
+  { city: '深圳', province: '广东省', venue: '深圳前海壹方城', lat: 22.5431, lng: 114.0579, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '觅花街地铁口', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '武汉', province: '湖北省', venue: '武汉菱角湖万达广场', lat: 30.5928, lng: 114.3055, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '汇德隆银隆', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '河源', province: '广东省', venue: '坚基购物中心', lat: 23.7435, lng: 114.7, station: '其他应援站' },
+  { city: '昆明', province: '云南省', venue: '世纪金源购物中心', lat: 25.0389, lng: 102.7183, station: '其他应援站' },
+  { city: '通化', province: '吉林省', venue: '通化东昌成达广场', lat: 41.7283, lng: 125.9399, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '杭州大厦501城市广场', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '南京', province: '江苏省', venue: '锦创书城', lat: 32.0603, lng: 118.7969, station: '其他应援站' },
+  { city: '郑州', province: '河南省', venue: '正弘城', lat: 34.7466, lng: 113.6253, station: '其他应援站' },
+  { city: '青岛', province: '山东省', venue: '融创茂', lat: 36.0671, lng: 120.3826, station: '其他应援站' },
+  { city: '广州', province: '广东省', venue: '融创茂', lat: 23.1291, lng: 113.2644, station: '其他应援站' },
+  { city: '济南', province: '山东省', venue: '融创茂', lat: 36.6512, lng: 116.9972, station: '其他应援站' },
+  { city: '成都', province: '四川省', venue: '融创茂', lat: 30.5728, lng: 104.0668, station: '其他应援站' },
+  { city: '合肥', province: '安徽省', venue: '融创茂', lat: 31.8206, lng: 117.2272, station: '其他应援站' },
+  { city: '青岛', province: '山东省', venue: '精彩天地', lat: 36.0671, lng: 120.3826, station: '其他应援站' },
+  { city: '重庆', province: '重庆市', venue: '融创茂', lat: 29.4316, lng: 106.9123, station: '其他应援站' },
+  { city: '南昌', province: '江西省', venue: '融创茂', lat: 28.682, lng: 115.858, station: '其他应援站' },
+  { city: '无锡', province: '江苏省', venue: '融创茂', lat: 31.4912, lng: 120.3119, station: '其他应援站' },
+  { city: '贵阳', province: '贵州省', venue: '万象汇', lat: 26.647, lng: 106.6302, station: '其他应援站' },
+  { city: '太原', province: '山西省', venue: '怡然青年广场', lat: 37.8706, lng: 112.5489, station: '其他应援站' },
+  { city: '重庆', province: '重庆市', venue: '重庆解放碑英利大融城', lat: 29.4316, lng: 106.9123, station: '其他应援站' },
+  { city: '宁波', province: '浙江省', venue: 'K11', lat: 29.8683, lng: 121.544, station: '其他应援站' },
+  { city: '福州', province: '福建省', venue: '乐堤港·东百仓山店', lat: 26.0745, lng: 119.2965, station: '其他应援站' },
+  { city: '天津', province: '天津市', venue: '西青万达', lat: 39.1172, lng: 117.1985, station: '其他应援站' },
+  { city: '武汉', province: '湖北省', venue: '武汉金银湖万达广场', lat: 30.5928, lng: 114.3055, station: '其他应援站' },
+  { city: '福州', province: '福建省', venue: '新华都恒升中心', lat: 26.0745, lng: 119.2965, station: '其他应援站' },
+  { city: '重庆', province: '重庆市', venue: '京东MALL(重庆两江店）', lat: 29.4316, lng: 106.9123, station: '其他应援站' },
+  { city: '苏州', province: '江苏省', venue: '吴中万达广场', lat: 31.299, lng: 120.5853, station: '其他应援站' },
+  { city: '洛阳', province: '河南省', venue: '海城中街', lat: 34.6181, lng: 112.4539, station: '其他应援站' },
+  { city: '漯河', province: '河南省', venue: '新玛特', lat: 33.5814, lng: 114.0165, station: '其他应援站' },
+  { city: '南阳', province: '河南省', venue: '玉都成达坊', lat: 32.9908, lng: 112.5284, station: '其他应援站' },
+  { city: '天津', province: '天津市', venue: '东丽万达', lat: 39.1172, lng: 117.1985, station: '其他应援站' },
+  { city: '苏州', province: '江苏省', venue: '环球港', lat: 31.299, lng: 120.5853, station: '其他应援站' },
+  { city: '郑州', province: '河南省', venue: '高新万达广场', lat: 34.7466, lng: 113.6253, station: '其他应援站' },
+  { city: '温州', province: '浙江省', venue: '龙湾万达广场', lat: 28.0017, lng: 120.6994, station: '其他应援站' },
+  { city: '信阳', province: '河南省', venue: '新玛特', lat: 32.1471, lng: 114.0926, station: '其他应援站' },
+  { city: '许昌', province: '河南省', venue: '新玛特', lat: 34.0358, lng: 113.8523, station: '其他应援站' },
+  { city: '济南', province: '山东省', venue: '高新万达广场', lat: 36.6512, lng: 116.9972, station: '其他应援站' },
+  { city: '驻马店', province: '河南省', venue: '新玛特', lat: 33.0114, lng: 114.0223, station: '其他应援站' },
+  { city: '杭州', province: '浙江省', venue: '拱墅万达广场', lat: 30.2741, lng: 120.1551, station: '其他应援站' },
+  { city: '济南', province: '山东省', venue: '印象城', lat: 36.6512, lng: 116.9972, station: '其他应援站' },
+  { city: '广州', province: '广东省', venue: '1906科技园扬韬广场', lat: 23.1291, lng: 113.2644, station: '其他应援站' },
+  { city: '苏州', province: '江苏省', venue: '苏州石路天虹购物中心', lat: 31.299, lng: 120.5853, station: '其他应援站' },
+  { city: '郑州', province: '河南省', venue: '丹尼斯百货航海店', lat: 34.7466, lng: 113.6253, station: '其他应援站' }
+];
+
+// ========== 海外应援数据 ==========
+const overseasData = [
+  { id: 'o1', name: '韩国首尔·弘大广场', city: '首尔', country: '韩国', venue: '首尔麻浦区杨花路165号（地铁2号线弘大入口站2号口）', lat: 37.5520, lng: 126.9240, date: '7.11 6:00-24:00', station: 'Cherry66 & 潮汐锁定TidalLock1ng', tag: '海外❶' },
+  { id: 'o2', name: '日本东京·涩谷中心广场', city: '东京', country: '日本', venue: '东京涩谷区宇田川町24番6号（JR涩谷站八公口）', lat: 35.6593, lng: 139.7005, date: '7.11 8:00-24:00', station: 'Cherry66 & 潮汐锁定TidalLock1ng', tag: '海外❷' }
+];
+
+// Group by city (for map)
+function groupByCity(data) {
+  const map = new Map();
+  data.forEach(d => {
+    if (!map.has(d.city)) map.set(d.city, []);
+    map.get(d.city).push(d);
+  });
+  return Array.from(map.entries()).sort((a,b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+
+// Group by province → city
+function groupByProvince(data) {
+  const map = new Map();
+  data.forEach(d => {
+    const prov = d.province || d.city;
+    if (!map.has(prov)) map.set(prov, new Map());
+    const cityMap = map.get(prov);
+    if (!cityMap.has(d.city)) cityMap.set(d.city, []);
+    cityMap.get(d.city).push(d);
+  });
+  // Sort provinces, with 直辖市 first, then others alphabetically
+  const order = new Map();
+  const municipalities = ['北京市','天津市','上海市','重庆市'];
+  const provinces = Array.from(map.keys());
+  provinces.sort((a,b) => {
+    const aMuni = municipalities.includes(a) ? 0 : 1;
+    const bMuni = municipalities.includes(b) ? 0 : 1;
+    if (aMuni !== bMuni) return aMuni - bMuni;
+    return a.localeCompare(b, 'zh-CN');
+  });
+  return provinces.map(prov => {
+    const cityMap = map.get(prov);
+    const cities = Array.from(cityMap.entries())
+      .map(([city, venues]) => ({ city, count: venues.length, venues }))
+      .sort((a,b) => b.count - a.count || a.city.localeCompare(b.city, 'zh-CN'));
+    return { province: prov, cities: cities, totalScreens: cities.reduce((s,c) => s + c.count, 0) };
+  });
+}
+
+const cityGroups = groupByCity(screenData);
+const allCities = cityGroups.map(([city, venues]) => ({ city, count: venues.length, venues }));
+const provinceGroups = groupByProvince(screenData);
+
+// Stats - auto from data
+const specialCities = specialProjects.filter(p => p.city !== '全国').map(p => p.city);
+const screenCities = new Set(screenData.map(d => d.city));
+const allUniqueCities = new Set([...specialCities, ...screenCities]);
+document.getElementById('stat-special').innerHTML = specialProjects.length + ' <span style="font-size:10px;color:#A8A8C2">特别企划</span>';
+document.getElementById('stat-screens').innerHTML = screenData.length + ' <span style="font-size:10px;color:#A8A8C2">应援大屏</span>';
+document.getElementById('stat-cities').innerHTML = allUniqueCities.size + ' <span style="font-size:10px;color:#A8A8C2">城市</span>';
+document.getElementById('stat-overseas').innerHTML = overseasData.length + ' <span style="font-size:10px;color:#A8A8C2">海外</span>';
+
+// ========== MAP ==========
+const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([35.8, 109.5], 4);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  className: 'dark-tiles'
+}).addTo(map);
+
+const purpleIcon = L.divIcon({ className: 'custom-marker', html: '<div style="width:10px;height:10px;background:#9333EA;border-radius:50%;box-shadow:0 0 10px #9333EA,0 0 20px rgba(147,51,234,0.5);border:2px solid rgba(255,255,255,0.3)"></div>', iconSize: [14,14], iconAnchor: [7,7] });
+const goldIcon = L.divIcon({ className: 'custom-marker', html: '<div style="width:12px;height:12px;background:#E53E3E;border-radius:50%;box-shadow:0 0 12px #E53E3E,0 0 24px rgba(229,62,62,0.5);border:2px solid rgba(255,255,255,0.4)"></div>', iconSize: [16,16], iconAnchor: [8,8] });
+
+// Plot screens by city centroid WITH city name labels
+allCities.forEach(c => {
+  const avgLat = c.venues.reduce((s,v) => s + v.lat, 0) / c.venues.length;
+  const avgLng = c.venues.reduce((s,v) => s + v.lng, 0) / c.venues.length;
+  L.marker([avgLat, avgLng], { icon: purpleIcon }).addTo(map)
+    .bindPopup(`<b>${c.city}</b><br>${c.count}块大屏`)
+    .bindTooltip(c.city, { permanent: true, direction: 'right', offset: [6, 0], className: 'map-city-label' });
+});
+
+specialProjects.forEach(p => {
+  if (p.lat && p.lng) {
+    L.marker([p.lat, p.lng], { icon: goldIcon }).addTo(map)
+      .bindPopup(`<b>${p.tag} ${p.name}</b><br>${p.venue}`);
+  }
+});
+
+// Plot overseas on map (green markers)
+const overseasIcon = L.divIcon({ className: 'custom-marker', html: '<div style="width:12px;height:12px;background:#22C55E;border-radius:50%;box-shadow:0 0 12px #22C55E,0 0 24px rgba(34,197,94,0.5);border:2px solid rgba(255,255,255,0.4)"></div>', iconSize: [16,16], iconAnchor: [8,8] });
+overseasData.forEach(o => {
+  if (o.lat && o.lng) {
+    L.marker([o.lat, o.lng], { icon: overseasIcon }).addTo(map)
+      .bindPopup(`<b>🌏 ${o.name}</b><br>${o.venue}`)
+      .bindTooltip(`${o.city}(${o.country})`, { permanent: true, direction: 'right', offset: [6, 0], className: 'map-city-label' });
+  }
+});
+
+// ========== RENDER ==========
+function renderSpecialProjects() {
+  const container = document.getElementById('specialSection');
+  let html = `<div class="section-title gold" onclick="toggleSection('specBody', this)">
+    <span>✨ 特别企划</span><span class="s-arrow">▼</span>
+  </div><div class="section-body" id="specBody">`;
+  
+  specialProjects.forEach((p, i) => {
+    const iconHtml = p.iconImg ? `<img src="${p.iconImg}" class="special-poster" />` : (p.icon ? `<span class="icon">${p.icon}</span>` : `<img src="poster.jpg" class="special-poster" />`);
+    html += `<div class="special-card" data-spidx="${i}">
+      ${iconHtml}<div class="info"><div class="name">${p.name}</div><div class="sub">${p.venue}</div></div><span class="tag">${p.tag}</span>
+    </div>`;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+  
+  // Re-attach click handlers
+  container.querySelectorAll('.special-card').forEach(card => {
+    const idx = parseInt(card.dataset.spidx);
+    card.onclick = () => showDetail(specialProjects[idx], 'special');
+  });
+}
+
+function renderCityList(filter = '') {
+  const container = document.getElementById('cityList');
+  const q = filter.trim().toLowerCase();
+  
+  // If searching, show flat results
+  if (q) {
+    const filtered = allCities.filter(c => c.city.includes(q) || c.venues.some(v => v.venue.includes(q) || v.station.includes(q)));
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty">没有找到匹配的应援 💜</div>';
+      return;
+    }
+    container.innerHTML = filtered.map(c => {
+      const venuesText = c.venues.map(v => v.venue).join(' · ').substring(0, 40) + (c.venues.map(v => v.venue).join(' · ').length > 40 ? '...' : '');
+      return `<div class="city-card" onclick="showCityDetail('${c.city}')">
+        <img src="poster-screen.jpg" class="gradient-block" />
+        <div class="city-info"><div class="city-name">${c.city}</div><div class="city-venues">${venuesText}</div></div>
+        <span class="screen-count">${c.count}块大屏</span>
+      </div>`;
+    }).join('');
+    return;
+  }
+  
+  // Default: province-grouped view
+  if (provinceGroups.length === 0) {
+    container.innerHTML = '<div class="empty">暂无数据 💜</div>';
+    return;
+  }
+  
+  container.innerHTML = provinceGroups.map((prov, idx) => {
+    const provId = 'prov-' + idx;
+    const citiesHTML = prov.cities.map(c => {
+      const venuesText = c.venues.map(v => v.venue).join(' · ').substring(0, 40) + (c.venues.map(v => v.venue).join(' · ').length > 40 ? '...' : '');
+      return `<div class="city-card" onclick="showCityDetail('${c.city}')">
+        <img src="poster-screen.jpg" class="gradient-block" />
+        <div class="city-info"><div class="city-name">${c.city}</div><div class="city-venues">${venuesText}</div></div>
+        <span class="screen-count">${c.count}块大屏</span>
+      </div>`;
+    }).join('');
+    
+    return `<div class="province-header" onclick="toggleProvince('${provId}')">
+      <span class="arrow">▼</span>
+      <span>${prov.province}</span>
+      <span style="color:var(--purple);font-size:10px;margin-left:auto">${prov.totalScreens}块大屏</span>
+    </div>
+    <div class="province-cities" id="${provId}">${citiesHTML}</div>`;
+  }).join('');
+}
+
+function toggleProvince(id) {
+  const el = document.getElementById(id);
+  const header = el.previousElementSibling;
+  if (!el || !header) return;
+  el.classList.toggle('collapsed');
+  header.classList.toggle('collapsed');
+}
+
+function toggleSection(bodyId, headerEl) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.classList.toggle('collapsed');
+  headerEl.classList.toggle('collapsed');
+}
+
+// ========== MODAL ==========
+function showDetail(item, type) {
+  const overlay = document.getElementById('modal');
+  const sheet = document.getElementById('modalSheet');
+  const dateStr = item.date || '7.11';
+  const benefit = item.benefit || '详见原帖';
+  
+  sheet.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">${item.icon || '📺'} ${item.name || item.city}</div>
+    <div class="modal-detail">
+      <div class="row"><span class="label">📍 地点</span><span class="val">${item.venue}</span></div>
+      <div class="row"><span class="label">📅 时间</span><span class="val">${dateStr}</span></div>
+      <div class="row"><span class="label">🏷 主办</span><span class="val">${item.station || '专属花房ForPINKRAY'}</span></div>
+      ${benefit ? `<div class="row"><span class="label">✨ 福利</span><span class="val">${benefit}</span></div>` : ''}
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal()">关闭</button>
+      <button class="modal-btn primary" onclick="openMap('${item.venue.replace(/'/g,"\\'")}')">🗺 导航</button>
+    </div>
+  `;
+  overlay.classList.add('show');
+}
+
+function showCityDetail(city) {
+  const group = cityGroups.find(([c]) => c === city);
+  if (!group) return;
+  const [, venues] = group;
+  const overlay = document.getElementById('modal');
+  const sheet = document.getElementById('modalSheet');
+  
+  sheet.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">${city}</div>
+    <div class="modal-detail">
+      ${venues.map(v => `<div class="row"><span class="label">📍</span><span class="val">${v.venue}</span><span style="color:var(--text-weak);font-size:11px">${v.station}</span></div>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal()">关闭</button>
+      <button class="modal-btn primary" onclick="openCityMap('${city}')">🗺 查看地图</button>
+    </div>
+  `;
+  overlay.classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+function showOverseasDetail(id) {
+  const o = overseasData.find(x => x.id === id);
+  if (!o) return;
+  const sheet = document.getElementById('modalSheet');
+  sheet.innerHTML = `
+    <div class="modal-header">
+      <div><span style="font-size:28px">🌏</span> <b>${o.name}</b></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px">
+      <p><b>📍 国家/城市</b><br>${o.country} · ${o.city}</p>
+      <p><b>🏢 地点</b><br>${o.venue}</p>
+      ${o.date ? `<p><b>📅 时间</b><br>${o.date}</p>` : ''}
+      <p><b>💜 应援站</b><br>${o.station || '-'}</p>
+      ${o.benefit ? `<p><b>✨ 亮点</b><br>${o.benefit}</p>` : ''}
+      <button class="modal-btn primary" onclick="openMap('${o.venue}')" style="width:100%;margin-top:12px">🗺 查看地图</button>
+    </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+function openMap(addr) { window.open(`https://uri.amap.com/search?keyword=${encodeURIComponent(addr)}`); }
+function openCityMap(city) {
+  const g = cityGroups.find(([c]) => c === city);
+  if (g) {
+    const avgLat = g[1].reduce((s,v) => s+v.lat,0)/g[1].length;
+    const avgLng = g[1].reduce((s,v) => s+v.lng,0)/g[1].length;
+    map.setView([avgLat, avgLng], 12);
+    closeModal();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// ========== LOCATION & DISTANCE ==========
+let userPosition = null;
+let locationStatus = 'idle'; // idle | locating | located | denied
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatDistance(km) {
+  if (km < 1) return (km * 1000).toFixed(0) + 'm';
+  if (km < 10) return km.toFixed(1) + 'km';
+  return Math.round(km) + 'km';
+}
+
+function requestLocation(callback) {
+  locationStatus = 'locating';
+  if (!navigator.geolocation) {
+    locationStatus = 'denied';
+    if (callback) callback(false);
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      locationStatus = 'located';
+      if (callback) callback(true);
+    },
+    err => {
+      locationStatus = 'denied';
+      if (callback) callback(false);
+    },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+  );
+}
+
+function renderNearbyList() {
+  const container = document.getElementById('cityList');
+  
+  // Show status bar
+  const statusBar = document.getElementById('nearbyStatus');
+  if (!statusBar) {
+    const ref = document.getElementById('listContainer');
+    const bar = document.createElement('div');
+    bar.id = 'nearbyStatus';
+    bar.className = 'nearby-status';
+    ref.parentNode.insertBefore(bar, ref);
+  }
+  
+  if (locationStatus === 'idle' || locationStatus === 'locating') {
+    document.getElementById('nearbyStatus').className = 'nearby-status locating';
+    document.getElementById('nearbyStatus').innerHTML = '<span class="ns-dot pulse"></span> 正在获取位置…';
+    container.innerHTML = '';
+    requestLocation(success => {
+      if (document.querySelector('.tab-item.active').textContent.includes('附近')) {
+        if (success) renderNearbyList();
+        else renderNearbyList();
+      }
+    });
+    return;
+  }
+  
+  if (locationStatus === 'denied' || !userPosition) {
+    document.getElementById('nearbyStatus').className = 'nearby-status denied';
+    document.getElementById('nearbyStatus').innerHTML = '<span class="ns-dot err"></span> 需要定位权限才能查看附近应援 <span class="ns-retry" onclick="retryLocation()">重新定位</span>';
+    container.innerHTML = '<div class="empty" style="padding:32px 20px">定位未授权，请允许位置权限后重试<br><span style="color:var(--purple);font-size:12px;cursor:pointer;margin-top:8px;display:inline-block" onclick="retryLocation()">📍 点击重新获取位置</span></div>';
+    return;
+  }
+  
+  // Calculate distances for all cities
+  const withDistance = allCities.map(c => {
+    const avgLat = c.venues.reduce((s,v) => s + v.lat, 0) / c.venues.length;
+    const avgLng = c.venues.reduce((s,v) => s + v.lng, 0) / c.venues.length;
+    return { ...c, avgLat, avgLng, dist: haversine(userPosition.lat, userPosition.lng, avgLat, avgLng) };
+  }).sort((a,b) => a.dist - b.dist);
+  
+  // Status: found X nearby cities
+  const nearestDist = withDistance[0].dist;
+  document.getElementById('nearbyStatus').className = 'nearby-status located';
+  document.getElementById('nearbyStatus').innerHTML = '<span class="ns-dot pulse"></span> 最近应援 <b>' + formatDistance(nearestDist) + '</b> · ' + withDistance.length + '个城市 <span class="ns-retry" onclick="retryLocation()">刷新</span>';
+  
+  // Render sorted
+  container.innerHTML = withDistance.map(c => {
+    const venuesText = c.venues.map(v => v.venue).join(' · ').substring(0, 40) + (c.venues.map(v => v.venue).join(' · ').length > 40 ? '...' : '');
+    return `<div class="city-card" onclick="showCityDetail('${c.city}')">
+      <img src="poster-screen.jpg" class="gradient-block" />
+      <div class="city-info"><div class="city-name">${c.city}</div><div class="city-venues">${venuesText}</div></div>
+      <span class="distance-badge">📍 ${formatDistance(c.dist)}</span>
+      <span class="screen-count">${c.count}块大屏</span>
+    </div>`;
+  }).join('');
+  
+  // Also plot on map
+  map.setView([userPosition.lat, userPosition.lng], 5);
+}
+
+function retryLocation() {
+  userPosition = null;
+  locationStatus = 'idle';
+  renderNearbyList();
+}
+
+// ========== TABS ==========
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const container = document.getElementById('listContainer');
+  const statusBar = document.getElementById('nearbyStatus');
+  
+  // Remove nearby status bar if not nearby tab
+  if (statusBar) statusBar.remove();
+  
+  if (tab === 'abroad') {
+    let html = '<div class="section"><div class="section-title purple">🌏 海外应援</div>';
+    if (overseasData.length === 0) {
+      html += '<div class="empty" style="padding:60px 20px">海外应援数据持续更新中…<br>敬请期待 💜</div>';
+    } else {
+      html += '<div class="section-body" style="padding:0 16px 12px">';
+      overseasData.forEach(o => {
+        html += `<div class="city-card" onclick="showOverseasDetail('${o.id}')">
+          <span style="font-size:24px;margin-right:10px">🌏</span>
+          <div class="city-info">
+            <div class="city-name">${o.country} · ${o.city}</div>
+            <div class="city-venues">${o.venue} ${o.date ? '· ' + o.date : ''}</div>
+            <div class="city-venues" style="font-size:11px;color:#A8A8C2">${o.station || ''}</div>
+          </div>
+          ${o.tag ? `<span class="tag" style="font-size:10px;font-weight:600;color:var(--purple);white-space:nowrap">${o.tag}</span>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } else if (tab === 'nearby') {
+    container.innerHTML = '<div class="section" id="screenSection"><div class="section-title purple"><span>📍 附近应援点</span></div><div class="section-body"><div id="cityList"></div></div></div>';
+    renderNearbyList();
+  } else {
+    container.innerHTML = '<div class="section" id="specialSection"></div><div class="section" id="screenSection"><div class="section-title purple" onclick="toggleSection(&#39;screenBody&#39;, this)"><span>📺 全国大屏点亮计划</span><span class="s-arrow">▼</span></div><div class="section-body" id="screenBody"><div id="cityList"></div></div></div>';
+    renderSpecialProjects();
+    renderCityList();
+  }
+}
+
+// ========== COUNTDOWN ==========
+function updateCountdown() {
+  const target = new Date('2026-07-11T00:00:00+08:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('cd-d').textContent = '🎂';
+    ['cd-h','cd-m','cd-s'].forEach(id => document.getElementById(id).parentElement.style.display = 'none');
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-d').textContent = String(d).padStart(2, '0');
+  document.getElementById('cd-h').textContent = String(h).padStart(2, '0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2, '0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2, '0');
+}
+
+// ========== INIT ==========
+renderSpecialProjects();
+renderCityList();
+updateCountdown();
+setInterval(updateCountdown, 1000);
+updateFabBadge();
+
+// ========== SUBMIT FORM ==========
+function openSubmitForm() {
+  const panel = document.getElementById('submitPanel');
+  panel.innerHTML = `
+    <h3>➕ 补充应援</h3>
+    <div class="hint">提交后管理员审核通过即可上线显示 💜</div>
+    <div class="field"><label><span class="req">*</span> 省份</label><input type="text" id="sfProvince" placeholder="如：浙江省" maxlength="20"></div>
+    <div class="field"><label><span class="req">*</span> 城市</label><input type="text" id="sfCity" placeholder="如：杭州" maxlength="20"></div>
+    <div class="field"><label><span class="req">*</span> 地点/商圈名称</label><input type="text" id="sfVenue" placeholder="如：湖滨银泰in77" maxlength="60"></div>
+    <div class="submit-row">
+      <div class="field"><label>日期</label><input type="text" id="sfDate" placeholder="如：7.11" maxlength="30"></div>
+      <div class="field"><label>应援类型</label><select id="sfType"><option value="大屏">大屏</option><option value="花房应援">花房应援</option><option value="咖啡应援">咖啡应援</option><option value="包场">包场</option><option value="其他特别企划">其他特别企划</option></select></div>
+    </div>
+    <div class="field"><label>应援站名称</label><input type="text" id="sfStation" placeholder="如：专属花房ForPINKRAY" maxlength="60"></div>
+    <div class="field"><label>打卡福利</label><input type="text" id="sfBenefit" placeholder="如：限量小卡、杯套" maxlength="100"></div>
+    <div class="field"><label>联系方式（选填，方便回访确认）</label><input type="text" id="sfContact" placeholder="如：小红书ID或微信号" maxlength="60"></div>
+    <div class="field"><label>备注</label><textarea id="sfNotes" placeholder="补充说明…" maxlength="200"></textarea></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeSubmitForm()">取消</button>
+      <button class="modal-btn primary" onclick="doSubmit()">✅ 提交</button>
+    </div>
+  `;
+  document.getElementById('submitOverlay').classList.add('show');
+}
+function closeSubmitForm() { document.getElementById('submitOverlay').classList.remove('show'); }
+function doSubmit() {
+  const city = document.getElementById('sfCity').value.trim();
+  const venue = document.getElementById('sfVenue').value.trim();
+  const province = document.getElementById('sfProvince').value.trim();
+  if (!city || !venue || !province) { alert('请至少填写省份、城市和地点'); return; }
+  
+  const entry = {
+    province, city, venue,
+    date: document.getElementById('sfDate').value.trim() || '7.11',
+    type: document.getElementById('sfType').value,
+    station: document.getElementById('sfStation').value.trim() || '未填写',
+    benefit: document.getElementById('sfBenefit').value.trim() || '',
+    contact: document.getElementById('sfContact').value.trim() || '',
+    notes: document.getElementById('sfNotes').value.trim() || '',
+    time: new Date().toISOString()
+  };
+  
+  // Save to localStorage
+  let pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  pending.push(entry);
+  localStorage.setItem('ymh_pending', JSON.stringify(pending));
+  
+  // Show done + copy text
+  const text = `【岳明辉711应援补充】
+📌 ${entry.type} | ${entry.province} ${entry.city}
+📍 ${entry.venue}
+📅 ${entry.date}
+🏷 ${entry.station}
+${entry.benefit ? '✨ ' + entry.benefit : ''}
+${entry.contact ? '📞 ' + entry.contact : ''}
+${entry.notes ? '💬 ' + entry.notes : ''}`;
+  
+  const panel = document.getElementById('submitPanel');
+  panel.innerHTML = `
+    <div class="submit-done">
+      <div class="done-icon">✅</div>
+      <p>提交成功！审核通过后即可上线显示 💜</p>
+      <div class="copied-text">${text.replace(/\n/g, '<br>')}</div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeSubmitForm()">关闭</button>
+        <button class="modal-btn primary" onclick="copyText(\`${text.replace(/`/g,'\\`').replace(/\\/g,'\\\\')}\`)">📋 复制文案</button>
+      </div>
+    </div>
+  `;
+  updateFabBadge();
+  
+  // Auto-copy
+  setTimeout(() => {
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+  }, 200);
+}
+function copyText(text) {
+  try { navigator.clipboard.writeText(text); alert('已复制！可以发给管理员审核'); } catch(e) { alert('复制失败，请手动长按复制'); }
+}
+
+// ========== ADMIN PANEL ==========
+let heroTapCount = 0, heroTapTimer = null;
+document.querySelector('.hero h1').onclick = function() {
+  heroTapCount++;
+  clearTimeout(heroTapTimer);
+  heroTapTimer = setTimeout(() => { heroTapCount = 0; }, 1500);
+  if (heroTapCount >= 5) { heroTapCount = 0; openAdmin(); }
+};
+
+function openAdmin() {
+  const pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  const done = JSON.parse(localStorage.getItem('ymh_done') || '[]');
+  document.getElementById('adminCount').textContent = pending.length;
+  const list = document.getElementById('adminList');
+  if (pending.length === 0) {
+    list.innerHTML = '<div class="admin-empty">暂无待审核的应援 🙌</div>';
+  } else {
+    list.innerHTML = pending.map((p,i) => `
+      <div class="admin-item">
+        <div class="ai-row"><span class="ai-l">类型</span><span class="ai-v">${p.type}</span></div>
+        <div class="ai-row"><span class="ai-l">地点</span><span class="ai-v">${p.province} ${p.city} · ${p.venue}</span></div>
+        <div class="ai-row"><span class="ai-l">日期</span><span class="ai-v">${p.date}</span></div>
+        <div class="ai-row"><span class="ai-l">主办</span><span class="ai-v">${p.station}</span></div>
+        ${p.benefit ? `<div class="ai-row"><span class="ai-l">福利</span><span class="ai-v">${p.benefit}</span></div>` : ''}
+        ${p.contact ? `<div class="ai-row"><span class="ai-l">联系</span><span class="ai-v">${p.contact}</span></div>` : ''}
+        ${p.notes ? `<div class="ai-row"><span class="ai-l">备注</span><span class="ai-v">${p.notes}</span></div>` : ''}
+        <div class="admin-actions">
+          <button class="admin-btn done" onclick="markDone(${i})">✅ 已录入</button>
+          <button class="admin-btn del" onclick="markDelete(${i})">🗑 删除</button>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('adminPanel').classList.add('show');
+}
+function closeAdmin() { document.getElementById('adminPanel').classList.remove('show'); updateFabBadge(); }
+function markDone(i) {
+  let pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  let done = JSON.parse(localStorage.getItem('ymh_done') || '[]');
+  done.push(pending[i]);
+  pending.splice(i, 1);
+  localStorage.setItem('ymh_pending', JSON.stringify(pending));
+  localStorage.setItem('ymh_done', JSON.stringify(done));
+  openAdmin();
+  updateFabBadge();
+}
+function markDelete(i) {
+  let pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  pending.splice(i, 1);
+  localStorage.setItem('ymh_pending', JSON.stringify(pending));
+  openAdmin();
+  updateFabBadge();
+}
+function exportPending() {
+  const pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  if (pending.length === 0) { alert('暂无待审核数据'); return; }
+  const text = pending.map(p =>
+    `${p.province}\t${p.city}\t${p.venue}\t${p.type}\t${p.date}\t${p.station}\t${p.benefit || '-'}\t${p.contact || '-'}\t${p.notes || '-'}`
+  ).join('\n');
+  const header = '省份\t城市\t地点\t类型\t日期\t应援站\t福利\t联系方式\t备注\n';
+  try {
+    navigator.clipboard.writeText(header + text);
+    alert('已复制 ' + pending.length + ' 条待审核数据！可直接粘贴发给WorkBuddy录入');
+  } catch(e) {
+    // Fallback: download as txt
+    const blob = new Blob([header + text], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ymh_pending.txt'; a.click();
+  }
+}
+function updateFabBadge() {
+  const pending = JSON.parse(localStorage.getItem('ymh_pending') || '[]');
+  const badge = document.getElementById('fabBadge');
+  if (pending.length > 0) {
+    badge.textContent = pending.length;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
